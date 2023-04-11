@@ -1,0 +1,4 @@
+sqlalchemy
+binance-connector
+pandas
+requests

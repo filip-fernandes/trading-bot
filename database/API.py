@@ -3,17 +3,17 @@ import requests
 
 URL = 'https://api.binance.com/api/v3/'
 
-def execute_request(endpoint):
+def execute_request(endpoint) -> dict:
     res = requests.get(URL + endpoint)
     return res.json()
 
-def get_all_symbols():
+def get_all_symbols() -> list:
     endpoint = 'ticker/price'
     res = execute_request(endpoint)
     symbols = [item['symbol'] for item in res]
     return symbols
 
-def get_24hr():
+def get_24hr() -> list:
     endpoint = 'ticker/24hr'
     res = execute_request(endpoint)
     res = [item for item in res if "USDT" in item["symbol"]]
