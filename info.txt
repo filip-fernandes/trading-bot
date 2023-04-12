@@ -1,7 +1,0 @@
-https://github.com/binance/binance-connector-python
-https://www.binance.com/pt-BR/binance-api
-https://binance-docs.github.io/apidocs/
-https://binance-connector.readthedocs.io/en/latest/
-https://www.binance.com/pt-BR/my/settings/api-management
-
-https://chat.openai.com/chat
