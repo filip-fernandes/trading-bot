@@ -15,8 +15,8 @@ Session = sessionmaker(bind=engine)
 session = Session()
 
 # Define the maximum number of batches
-MAX_BATCHES = 300
-RATE = 5 # 5 seconds
+MAX_BATCHES = 60
+RATE = 5 # 4 seconds
 curr_time = 0
 
 while True:
