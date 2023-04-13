@@ -1,3 +1,4 @@
+"""All http requests from the server are defined here"""
 import requests
 
 

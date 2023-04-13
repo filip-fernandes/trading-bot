@@ -1,45 +1,37 @@
-# Feed the database 
-
-from database.model import MarketData, Base
-from api import *
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+""" Feed the database"""
+from database.model import MarketData
 import time
-import os
+from database.db_utils import *
+from api import *
 
-os.remove('MarketData.db')
-engine = create_engine('sqlite:///MarketData.db')
-Base.metadata.create_all(engine)
 
-Session = sessionmaker(bind=engine)
-session = Session()
+def main():
+    MAX_BATCHES = 60
+    RATE = 5
+    curr_time = 0
 
-# Define the maximum number of batches
-MAX_BATCHES = 60
-RATE = 5 # 4 seconds
-curr_time = 0
+    while True:
+        # append batches of MarketData
+        tickers = get_24hr("USDT")
+        data = []
+        for ticker in tickers:
+            symbol = ticker["symbol"]
+            last_price = ticker["lastPrice"]
+            close_time = curr_time
+            data.append(MarketData(symbol=symbol, last_price=last_price, close_time=close_time))
+        add_to_db(data)
+        curr_time += 1
 
-while True:
-    # append batches of MarketData
-    tickers = get_24hr("USDT")
-    data = []
-    for ticker in tickers:
-        symbol = ticker["symbol"]
-        last_price = ticker["lastPrice"]
-        close_time = curr_time
-        data.append(MarketData(symbol=symbol, last_price=last_price, close_time=close_time))
-    session.add_all(data)
-    session.commit()
-    curr_time += 1
+        # Query the database for the number of distinct time values
+        num_batches = get_num_batches()
 
-    # Query the database for the number of distinct time values
-    num_batches = session.query(MarketData.close_time.distinct()).count()
+        # Crop the db to maximum size
+        if num_batches > MAX_BATCHES:
+            delete_old_data()
+            curr_time = 0
 
-    # Crop the db to maximum size
-    if num_batches > MAX_BATCHES:
-        oldest_time = session.query(MarketData.close_time.distinct()).order_by(MarketData.close_time).first()[0]
-        session.query(MarketData).filter(MarketData.close_time == oldest_time).delete()
-        session.commit()
+        time.sleep(RATE)
+                
 
-    time.sleep(RATE)
-            
+if __name__ == '__main__':
+    main()

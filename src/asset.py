@@ -1,40 +1,31 @@
-import sqlalchemy
-from database.model import MarketData
-from sqlalchemy.orm import sessionmaker
 import asyncio
+import threading
+from database.db_utils import *
 from api import *
 
 
 class Asset:
 
-    def __init__(self, symbol, session, get_time, interval, threshold) -> None:
+    def __init__(self, symbol, interval, threshold) -> None:
         self.symbol = symbol
-        self.session = session
-        self.t = get_time
         self.interval = interval
         self.threshold = threshold
         self.quantity = 0
         self.price = 0
         self.change = 0
         self.should_stop = True
-        self.counter = 0 
+        self.counter = 0
    
-    def get_change(self):
-        t = self.t()
-        assert self.interval < self.t()
-        present = self.session.query(MarketData).filter(
-            MarketData.close_time == t,
-            MarketData.symbol == self.symbol
-        ).all()[0]
-        past = self.session.query(MarketData).filter(
-            MarketData.close_time == t - self.interval, 
-            MarketData.symbol == self.symbol
-        ).all()[0]
+    def update_change(self):
+        t = get_current_time()
+        assert self.interval < t
+        present = get_data(self.symbol, t)
+        past =  get_data(self.symbol, t, self.interval)
         try:
             self.change = round(((present.last_price - past.last_price)/present.last_price) * 100, 2)
         except ZeroDivisionError:
             self.change = 0.0
-        self.price = present
+        self.price = present.last_price
 
     def is_profitable(self):
         return self.counter > 3
@@ -42,7 +33,7 @@ class Asset:
     async def run(self):
         self.should_stop = False
         while True:
-            self.get_change()
+            self.update_change()
             if self.is_profitable():
                 print(f'bought {self.symbol} at {self.price}')
                 self.counter = 0
@@ -51,27 +42,29 @@ class Asset:
             else:
                 self.counter = 0
             await asyncio.sleep(1)
+    
+    def execute_trade(self):
+        # separate into a thread
+        # get precise information
+        #
+        pass
+
         
 class Controller:
 
-    def __init__(self, threshold, interval, session) -> None:
-        self.threshold = threshold
-        self.interval = interval
-        self.assets = [Asset(symbol, session, get_current_time, 10, self.threshold) for symbol in get_all_symbols("USDT")]
+    def __init__(self, threshold, interval, primary) -> None:
+        self.assets = [Asset(symbol, interval, threshold) for symbol in get_all_symbols(primary)]
     
     async def run(self):
         tasks = [asset.run() for asset in self.assets]
         await asyncio.gather(*tasks)
 
-engine = sqlalchemy.create_engine('sqlite:///MarketData.db')
-Session = sessionmaker(bind=engine)
-session = Session()
+    def balance(self):
+        pass
 
-def get_current_time():
-    return session.query(sqlalchemy.func.max(MarketData.close_time)).scalar()
 
 async def main():
-    con = Controller(1.0, 3.0, session)
-    await con.run()
+    con = Controller(0.1, 2.0, "USDT")
+    await con.run() 
 
 asyncio.run(main())
