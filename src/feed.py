@@ -1,15 +1,18 @@
 """ Feed the database"""
 from database.model import MarketData
+from database.db_utils import (
+    add_to_db,
+    get_num_batches,
+    delete_old_data
+)
+from public_api import get_24hr
 import time
-from database.db_utils import *
-from api import *
 
 
 def main():
     MAX_BATCHES = 60
     RATE = 5
     curr_time = 0
-
     while True:
         # append batches of MarketData
         tickers = get_24hr("USDT")
