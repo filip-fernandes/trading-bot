@@ -5,10 +5,14 @@ import hmac
 import hashlib
 import requests
 import time
+import os
+from dotenv import load_dotenv
 
+
+load_dotenv() 
+API_KEY = os.getenv('API_KEY').encode()
+SECRET_KEY = os.getenv('API_SECRET').encode()
 URL = 'https://testnet.binance.vision/api/v3/'
-API_KEY = 'NbDiqkIlHnd6f2AXBmzvQmmHPVbdlBYNFB34wHmmoukl7sTgl708nKg3CyG2yIac'
-SECRET_KEY = b'yW0yASF4o2PEz1ae9y02JN7jk7nTBxId1X1Kw1SfM1VSE5oTlzMErwIWRrG0jScu'
 
 def execute_request(endpoint: str, params: dict = None, method: str = "GET", 
     public: bool = True) -> tuple:
@@ -60,6 +64,17 @@ def get_number_of_symbols(primary: str) -> int:
     _, content = execute_request(endpoint)
     number = len([item for item in content if primary in item["symbol"]])
     return number
+
+def get_filters(symbol: str = None):
+    """
+    Get the exchange info for a given symbol
+    """
+    endpoint = 'exchangeInfo'
+    params = {
+        'symbol': symbol,
+    }
+    _, content = execute_request(endpoint, params)
+    return content
 
 
 # Private Part

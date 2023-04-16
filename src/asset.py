@@ -44,7 +44,7 @@ class Asset:
             self.counter = 0
     
     def execute_trade(self):
-        chunk = 0.05 * self.spendable
+        chunk = 0.1 * self.spendable
         self.quantity = round(chunk / self.price, 2)
         self.price = round(self.price, 2)
         order = new_order(self.symbol, "BUY", "LIMIT", self.quantity, self.price)
