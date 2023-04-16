@@ -28,3 +28,4 @@ def delete_old_data():
     oldest_time = session.query(MarketData.close_time.distinct()).order_by(MarketData.close_time).first()[0]
     session.query(MarketData).filter(MarketData.close_time == oldest_time).delete()
     session.commit()
+

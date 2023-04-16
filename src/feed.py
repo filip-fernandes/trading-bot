@@ -5,7 +5,7 @@ from database.db_utils import (
     get_num_batches,
     delete_old_data
 )
-from public_api import get_24hr
+from api import get_24hr
 import time
 
 

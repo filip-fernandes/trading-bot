@@ -1,20 +1,19 @@
 from asset import Asset
-from public_api import get_all_symbols
-
-
+from api import get_all_symbols, get_balance
+import time
 
 class Controller:
 
     def __init__(self, threshold, interval, primary) -> None:
-        self.assets = [Asset(symbol, interval, threshold) for symbol in get_all_symbols(primary)]
-        self.orders = []
-        self.stop_loss = 0.0
+        self.assets = [Asset(symbol, interval, threshold) for symbol in get_all_symbols(primary)] 
  
-    
     def run(self):
-        while True:
-            orders = [asset.run() for asset in self.assets]
-
+        # initialize how much the assets can spend
+        for i in range(1):
+            spend = get_balance()
+            for asset in self.assets:
+                asset.spendable = spend
+                asset.run()
 
     def balance(self):
         pass

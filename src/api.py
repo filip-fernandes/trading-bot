@@ -10,43 +10,52 @@ URL = 'https://testnet.binance.vision/api/v3/'
 API_KEY = 'NbDiqkIlHnd6f2AXBmzvQmmHPVbdlBYNFB34wHmmoukl7sTgl708nKg3CyG2yIac'
 SECRET_KEY = b'yW0yASF4o2PEz1ae9y02JN7jk7nTBxId1X1Kw1SfM1VSE5oTlzMErwIWRrG0jScu'
 
-def execute_request(endpoint, method="GET", params=None, public=True) -> dict:
-    url = URL + endpoint
-    # public requests are always GET
-    if public:
-        res = requests.get(url, params=params)
-    else:
-        # Add the time to the parameters
+def execute_request(endpoint: str, params: dict = None, method: str = "GET", 
+    public: bool = True) -> tuple:
+    """
+    Execute a request to the server
+    """
+    url = f"{URL}{endpoint}"
+    if not params:
+        params = {}
+    if not public:
         params['timestamp'] = int(time.time() * 1000) 
-        # Generate the signature
         query_string = '&'.join([f"{key}={value}" for key, value in params.items()])
         signature = hmac.new(SECRET_KEY, query_string.encode('utf-8'), hashlib.sha256).hexdigest()
-        # Add the signature to the parameters
         params['signature'] = signature
-        # Send the request
         headers = {'X-MBX-APIKEY': API_KEY}
-        if method == "GET":
-            res = requests.get(url, headers=headers, params=params)
-        else:
-            res = requests.post(url, headers=headers, data=params)
-    status_code, content = res.status_code, res.json()
+        response = requests.request(method, url, headers=headers, params=params)
+    else:
+        # public requests are always GET
+        response = requests.get(url, params=params)
+    status_code = response.status_code
+    content =  response.json()
     return status_code, content
 
 # Public Part
 
-def get_all_symbols(primary) -> list:
+def get_all_symbols(primary: str) -> list:
+    """
+    Get all symbols for a given primary currency
+    """
     endpoint = 'ticker/price'
     _, content = execute_request(endpoint)
     symbols = [item['symbol'] for item in content if primary in item["symbol"]]
     return symbols
 
-def get_24hr(primary) -> list:
+def get_24hr(primary: str) -> list:
+    """
+    Get 24hr data for a given primary currency
+    """
     endpoint = 'ticker/24hr'
     _, content = execute_request(endpoint)
     tickers = [item for item in content if primary in item["symbol"]]
     return tickers
 
-def get_number_of_symbols(primary) -> list:
+def get_number_of_symbols(primary: str) -> int:
+    """
+    Get the number of symbols for a given primary currency
+    """
     endpoint = 'ticker/price'
     _, content = execute_request(endpoint)
     number = len([item for item in content if primary in item["symbol"]])
@@ -54,7 +63,11 @@ def get_number_of_symbols(primary) -> list:
 
 
 # Private Part
-def new_order(symbol, side, type, quantity, price=0.0) -> dict:
+def new_order(symbol: str, side: str, type: str, quantity: float, 
+    price: float = 0.0) -> bool:
+    """
+    Place a new order for a given symbol
+    """
     endpoint = 'order'
     params = {
         'symbol': symbol,
@@ -65,24 +78,56 @@ def new_order(symbol, side, type, quantity, price=0.0) -> dict:
     if params['type'] == "LIMIT":
         params['price'] = price
         params['timeInForce'] = 'GTC'
-    status_code, content  = execute_request(endpoint, "POST", params, public=False)
+    status_code, content  = execute_request(endpoint, params, "POST", False)
     if status_code != 200:
+        print(content,  "NEW ORDER FAILURE")
         return False
     return True
 
-def get_order(symbol) -> dict:
+def get_order(symbol: str) -> bool:
+    """
+    Check if the order is filled for a given symbol
+    """
     endpoint = 'openOrders'
     params = {
         'symbol': symbol,
     }
-    status_code, content = execute_request(endpoint, "GET", params, public=False)
-    if status_code != 200:
+    status_code, content = execute_request(endpoint, params, "GET", False)
+    if status_code != 200 or not content:
         return False
     status = content[0]['status']
-    if status == "NEW":
+    if status == "FILLED":
+        return True
+    return False
+  
+def get_balance(symbol: str = "USDT") -> str:
+    """
+    Get the balance of the account for a given symbol
+    """
+    endpoint = 'account'
+    status_code, content = execute_request(endpoint, method="GET", public=False)
+
+    if status_code != 200:
+        print(content, "GET BALANCE FAILURE")
+        return status_code
+    
+    balance = [item["free"] for item in content["balances"] if item["asset"] == symbol][0]
+
+    return float(balance)
+
+def cancel_order(symbol: str) -> bool:
+    """
+    Cancel the order of a given symbol
+    """
+    endpoint = 'openOrders'
+    params = {
+        'symbol': symbol,
+    }
+    status_code, content = execute_request(endpoint, params, "DELETE", False)
+    
+    if status_code != 200:
+        print(content, "CANCEL ORDER FAILURE")
         return False
     return True
-  
-
 
 
