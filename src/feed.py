@@ -13,9 +13,10 @@ def main():
     MAX_BATCHES = 60
     RATE = 5
     curr_time = 0
+    api = PublicAPI("USDT")
     while True:
         # append batches of MarketData
-        tickers = PublicAPI.get_24hr("USDT")
+        tickers = api.get_24hr()
         data = []
         for ticker in tickers:
             symbol = ticker["symbol"]

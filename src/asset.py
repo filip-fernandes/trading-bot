@@ -57,7 +57,7 @@ class Asset:
             if not buy_order.was_fullfiled():
                 continue
             initial_capital = buy_order.quantity * buy_order.price
-            time.sleep(20)
+            time.sleep(5)
             sell_order = Order(
                 symbol=self.symbol,
                 side="SELL",
@@ -67,7 +67,7 @@ class Asset:
             )   
             if sell_order.was_fullfiled():
                 final_capital = sell_order.quantity * sell_order.price
-                print(f'profit of{initial_capital - final_capital}')
+                print(f'profit of {initial_capital - final_capital}')
                 break
         self.spendable -= chunk
 
