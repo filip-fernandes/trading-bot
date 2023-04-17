@@ -5,7 +5,7 @@ from database.db_utils import (
     get_num_batches,
     delete_old_data
 )
-from api import get_24hr
+from api import PublicAPI
 import time
 
 
@@ -15,7 +15,7 @@ def main():
     curr_time = 0
     while True:
         # append batches of MarketData
-        tickers = get_24hr("USDT")
+        tickers = PublicAPI.get_24hr("USDT")
         data = []
         for ticker in tickers:
             symbol = ticker["symbol"]

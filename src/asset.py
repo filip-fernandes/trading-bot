@@ -1,7 +1,8 @@
 import threading
 from database.db_utils import *
 import time
-from api import new_order, cancel_order, get_order
+from order import Order
+from api import PrivateAPI
 
 class Asset:
 
@@ -9,13 +10,12 @@ class Asset:
         self.symbol = symbol
         self.interval = interval
         self.threshold = threshold
-        self.quantity = 0
         self.price = 0
         self.change = 0
         self.counter = 0
         self.spendable = 0
    
-    def update_change(self):
+    def update_values(self):
         t = get_current_time()
         assert self.interval < t
         present = get_data(self.symbol, t)
@@ -24,13 +24,13 @@ class Asset:
             self.change = round(((present.last_price - past.last_price)/present.last_price) * 100, 2)
         except ZeroDivisionError:
             self.change = 0.0
-        self.price = present.last_price
+        self.price = round(present.last_price, 2)
 
     def is_profitable(self):
         return self.change > self.threshold
 
     def run(self):
-        self.update_change()
+        self.update_values()
         thread = threading.Thread(target=self.execute_trade)
         thread.start()
         return
@@ -45,21 +45,32 @@ class Asset:
     
     def execute_trade(self):
         chunk = 0.1 * self.spendable
-        self.quantity = round(chunk / self.price, 2)
-        self.price = round(self.price, 2)
-        order = new_order(self.symbol, "BUY", "LIMIT", self.quantity, self.price)
-        if order:
-            print(f'bought {self.symbol} at {self.price}')
-            if not get_order(self.symbol):
-                cancelled = cancel_order(self.symbol)
-                if cancelled:
-                    print(f'cancelled {self.symbol}')
-            sold = new_order(self.symbol, "SELL", "MARKET", self.quantity)
-            if sold:
-                print(f"SOLD {self.symbol}")
-        else:
-            print(self.quantity, self.price, self.symbol)
-        self.quantity = 0
+        quantity = round(chunk / self.price, 2)
+        buy_order = Order(
+            symbol=self.symbol,
+            side="BUY",
+            type="LIMIT",
+            quantity=quantity,
+            price=self.price
+        )
+        while True:
+            if not buy_order.was_fullfiled():
+                continue
+            initial_capital = buy_order.quantity * buy_order.price
+            time.sleep(20)
+            sell_order = Order(
+                symbol=self.symbol,
+                side="SELL",
+                type="LIMIT",
+                quantity=quantity,
+                price=self.price
+            )   
+            if sell_order.was_fullfiled():
+                final_capital = sell_order.quantity * sell_order.price
+                print(f'profit of{initial_capital - final_capital}')
+                break
+        self.spendable -= chunk
+
 
     
         

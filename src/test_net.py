@@ -1,9 +1,12 @@
-from api import new_order, get_order, get_balance, cancel_order, get_24hr, exchange_info
+from order import Order
 import sys
+from api import PrivateAPI
 import time
 from pprint import pprint
 
 
-print(get_balance("USDT"))
+api = PrivateAPI("BTCUSDT")
 
-pprint(exchange_info("BTCUSDT"))
+#print(api.new_order("BUY", "MARKET", 0.001))
+
+print(api.get_balance())
