@@ -4,23 +4,22 @@ import time
 
 class Controller:
 
-    def __init__(self, threshold: float, interval: int, primary: str) -> None:
-        self.assets = [Asset(symbol, interval, threshold) for symbol in PublicAPI.get_all_symbols(primary)] 
-        self.primary = primary
- 
-    def run(self):
-        # initialize how much the assets can spend
-        for i in range(1):
-            spend = float(PrivateAPI.get_balance(self.primary)["content"][0])
-            for asset in self.assets:
-                asset.spendable = spend
-                asset.run()
+    def __init__(self, interval: int, change_threshold: float, primary: str, profit_margin: float, 
+        spend_percent: int, counter_threshold: int, stop_loss: float) -> None:
+        symbols = PublicAPI.get_all_symbols(primary)
+        self.assets = [Asset(
+            symbol, 
+            interval, 
+            change_threshold, 
+            stop_loss, 
+            spend_percent,
+            counter_threshold,
+            profit_margin,
+        ) for symbol in symbols if symbol != "BTTCUSDT"] # this coin is weird 
 
+    def run(self):
+        for asset in self.assets:
+            asset.run()
+    
     def balance(self):
         pass
-
-def main():
-    con = Controller(0.1, 5.0, "USDT")
-    con.run() 
-
-main()

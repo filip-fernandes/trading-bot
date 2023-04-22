@@ -7,7 +7,9 @@ Base.metadata.create_all(engine)
 Session = sessionmaker(bind=engine)
 session = Session()
 
-def get_data(symbol, current_time, interval=0):
+def get_data(symbol: str, interval: int = 0) -> MarketData:
+    current_time = get_current_time()
+    assert interval <= current_time, "Interval is too large"
     data = session.query(MarketData).filter(
         MarketData.close_time == current_time - interval, 
         MarketData.symbol == symbol

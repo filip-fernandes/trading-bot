@@ -1,39 +1,26 @@
 from api import PrivateAPI
 
 class Order:
-    def __init__(self, symbol: str, side: str, type: str, quantity: float, price: float) -> None:
+    def __init__(self, symbol: str, side: str, type: str, quantity: float, price: float = 0.0) -> None:
         self.api = PrivateAPI(symbol)
         response = self.api.new_order(side, type, quantity, price)
-        try:
-            assert response["status code"] == 200
-        except AssertionError:
-            raise AssertionError(response["content"])
         self.symbol = symbol
-        self.order_id = int(response["content"]["orderId"])
-        self.quantity = float(response["content"]["origQty"])
-        self.price = float(response["content"]["price"])
+        self.order_id = response["order_id"]
+        self.quantity = response["quantity"]
+        self.price = response["price"]
     
-    def cancel(self) -> None:
-        response = self.api.cancel_order(self.order_id)
-        try:
-            assert response["status code"] == 200
-        except AssertionError:
-            raise AssertionError(response["content"])
-        
-        if response["content"]["status"] == "CANCELED":
+    def cancel(self) -> bool:
+        status = self.api.cancel_order(self.order_id)
+        if status == "CANCELED":
             return True
         return False
         
     def was_fullfiled(self) -> bool:
-        response = self.api.get_order(self.order_id)
-        try:
-            assert response["status code"] == 200
-        except AssertionError:
-            raise AssertionError(response["content"])
-        
-        if response["content"]["status"] == "FILLED":
+        status = self.api.get_order(self.order_id)
+        if status == "FILLED":
             return True
         return False
+
 
         
 

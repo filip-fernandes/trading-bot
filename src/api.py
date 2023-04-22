@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 load_dotenv() 
 API_KEY = os.getenv('API_KEY').encode()
 SECRET_KEY = os.getenv('API_SECRET').encode()
-URL = 'https://testnet.binance.vision/api/v3/'
+URL = 'https://api.binance.com/api/v3/'
 
 def execute_request(endpoint: str, params: dict, method: str, 
 public: bool) -> tuple:
@@ -41,7 +41,8 @@ class PublicAPI:
         Get all symbols for a given primary currency
         """
         endpoint = 'ticker/price'
-        _, content = execute_request(endpoint,  {}, "GET", True)
+        status_code, content = execute_request(endpoint,  {}, "GET", True)
+        assert status_code == 200, f"Error: {content}"
         symbols = [item['symbol'] for item in content if primary in item["symbol"]]
         return symbols
 
@@ -51,7 +52,8 @@ class PublicAPI:
         Get 24hr data for a given primary currency
         """
         endpoint = 'ticker/24hr'
-        _, content = execute_request(endpoint,  {}, "GET", True)
+        status_code, content = execute_request(endpoint,  {}, "GET", True)
+        assert status_code == 200, f"Error: {content}"
         tickers = [item for item in content if primary in item["symbol"]]
         return tickers
 
@@ -61,7 +63,8 @@ class PublicAPI:
         Get the number of symbols for a given primary currency
         """
         endpoint = 'ticker/price'
-        _, content = execute_request(endpoint,  {}, "GET", True)
+        status_code, content = execute_request(endpoint,  {}, "GET", True)
+        assert status_code == 200, f"Error: {content}"
         number = len([item for item in content if primary in item["symbol"]])
         return number
 
@@ -74,8 +77,15 @@ class PublicAPI:
         params = {
             'symbol': symbol,
         }
-        _, content = execute_request(endpoint, params, "GET", True)
-        return content
+        status_code, content = execute_request(endpoint, params, "GET", True)
+        assert status_code == 200, f"Error: {content}"
+        filter_list = [content["symbols"][0]['filters'][i] for i in range(2)]
+        filters = {
+            "min_price": float(filter_list[0]['minPrice']),
+            "min_qty": float(filter_list[1]['minQty']),
+            "step_size": float(filter_list[1]['stepSize'])
+        }
+        return filters
 
 class PrivateAPI:
 
@@ -98,7 +108,13 @@ class PrivateAPI:
             params['price'] = price
             params['timeInForce'] = 'GTC'
         status_code, content  = execute_request(endpoint, params, "POST", False)
-        return {"status code": status_code, "content": content}
+        assert status_code == 200, f"Error: {content}"
+        response = {
+            "order_id": int(content['orderId']), 
+            "price": float(content["price"]),
+            "quantity": float(content["origQty"]),
+        }
+        return response
 
     def get_order(self, order_id: int) -> bool:
         """
@@ -110,7 +126,9 @@ class PrivateAPI:
             'orderId': order_id,
         }
         status_code, content =  execute_request(endpoint, params, "GET", False)
-        return {"status code": status_code, "content": content}
+        assert status_code == 200, f"Error: {content}"
+        response = content['status']
+        return response
     
     def cancel_order(self, order_id: int) -> bool:
         """
@@ -122,7 +140,9 @@ class PrivateAPI:
             'orderId': order_id,
         }
         status_code, content = execute_request(endpoint, params, "DELETE", False)
-        return {"status code": status_code, "content": content}
+        assert status_code == 200, f"Error: {content}"
+        response = content['status']
+        return response
     
     @staticmethod
     def get_balance(primary) -> str:
@@ -131,6 +151,8 @@ class PrivateAPI:
         """
         endpoint = 'account'
         status_code, content = execute_request(endpoint, {}, "GET", False)
+        assert status_code == 200, f"Error: {content}"
         balance = [item["free"] for item in content["balances"] if item["asset"] == primary]
-        return {"status code": status_code, "content": balance}
+        response = float(balance[0])
+        return response
 
