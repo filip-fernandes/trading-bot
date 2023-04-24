@@ -7,17 +7,18 @@ from database.db_utils import (
 )
 from api import PublicAPI
 
+
 curr_time = 0     # representative time, not real-world time
 MAX_BATCHES = 100 # max time that the db stores = MAX_BATCHES * RATE
 
-def feed(primary):
+def feed(primary) -> None:
     
     global curr_time
-    tickers = PublicAPI.get_24hr(primary)
+    tickers = PublicAPI.get_tickers(primary)
     data = []
     for ticker in tickers:
         symbol = ticker["symbol"]
-        last_price = ticker["lastPrice"]
+        last_price = ticker["price"]
         close_time = curr_time
         data.append(MarketData(symbol=symbol, last_price=last_price, close_time=close_time))
     add_to_db(data)
@@ -29,7 +30,8 @@ def feed(primary):
     # Crop the db to maximum size
     if num_batches >= MAX_BATCHES:
         delete_old_data()
-    
-    print(curr_time)
 
-            
+if __name__ == "__main__":
+    while True:
+        feed("USDT")
+        print(curr_time)

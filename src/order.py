@@ -1,6 +1,8 @@
 from api import PrivateAPI
 
+
 class Order:
+
     def __init__(self, symbol: str, side: str, type: str, quantity: float, price: float = 0.0) -> None:
         self.api = PrivateAPI(symbol)
         response = self.api.new_order(side, type, quantity, price)

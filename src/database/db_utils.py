@@ -2,6 +2,7 @@ import sqlalchemy
 from sqlalchemy.orm import sessionmaker
 from database.model import MarketData, Base
 
+
 engine = sqlalchemy.create_engine('sqlite:///MarketData.db')
 Base.metadata.create_all(engine)
 Session = sessionmaker(bind=engine)
@@ -16,17 +17,17 @@ def get_data(symbol: str, interval: int = 0) -> MarketData:
     ).all()[0]
     return data
 
-def get_current_time():
+def get_current_time() -> int:
     return session.query(sqlalchemy.func.max(MarketData.close_time)).scalar()
     
-def add_to_db(data):
+def add_to_db(data: list[MarketData]) -> None:
     session.add_all(data)
     session.commit()
 
-def get_num_batches():
+def get_num_batches() -> int:
     return session.query(MarketData.close_time.distinct()).count()
 
-def delete_old_data():
+def delete_old_data() -> None:
     oldest_time = session.query(MarketData.close_time.distinct()).order_by(MarketData.close_time).first()[0]
     session.query(MarketData).filter(MarketData.close_time == oldest_time).delete()
     session.commit()

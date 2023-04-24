@@ -1,6 +1,8 @@
 from asset import Asset
 from api import PrivateAPI, PublicAPI
 import time
+from database.model import MarketData
+
 
 class Controller:
 
@@ -15,11 +17,12 @@ class Controller:
             spend_percent,
             counter_threshold,
             profit_margin,
-        ) for symbol in symbols if symbol != "BTTCUSDT"] # this coin is weird 
+        ) for symbol in symbols if symbol != "BTTCUSDT"] # this coin is weird
 
     def run(self):
         for asset in self.assets:
             asset.run()
     
     def balance(self):
+        # TODO
         pass

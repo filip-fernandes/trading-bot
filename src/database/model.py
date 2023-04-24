@@ -9,5 +9,5 @@ class MarketData(Base):
 
     id = Column(Integer, primary_key=True)
     symbol = Column(String)
-    last_price = Column(Float)
-    close_time = Column(Float)
+    last_price = Column(Float, nullable=True)
+    close_time = Column(Float, nullable=True)

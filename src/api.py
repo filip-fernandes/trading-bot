@@ -47,11 +47,11 @@ class PublicAPI:
         return symbols
 
     @staticmethod
-    def get_24hr(primary: str) -> list:
+    def get_tickers(primary: str) -> list:
         """
-        Get 24hr data for a given primary currency
+        Get ticker data for a given primary currency
         """
-        endpoint = 'ticker/24hr'
+        endpoint = 'ticker/price'
         status_code, content = execute_request(endpoint,  {}, "GET", True)
         assert status_code == 200, f"Error: {content}"
         tickers = [item for item in content if primary in item["symbol"]]
