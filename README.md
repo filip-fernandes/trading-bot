@@ -1,4 +1,4 @@
-# trading
+# trade-bot
 A bot for trading cryptocurrencies on Binance.
 
 ## Read this first
